@@ -56,7 +56,9 @@ my_reviewer = define_agent(AgentDefinition(
     name="my-reviewer",
     model=resolve_model_spec("medium"),
     tools=["diff_stats"],
-    system_prompt="""# Code clarity reviewer
+    system_prompt=
+    
+    """# Code clarity reviewer
 
 You review a pull request's per-file patches for clarity and maintainability.
 
@@ -78,6 +80,30 @@ Return a short list of findings. Each finding has:
 
 If you find nothing, say so explicitly.""",
 ))
+
+
+naming_reviewer = define_agent(AgentDefinition(
+    name="naming-reviewer",
+    model=resolve_model_spec("small"),
+    tools=["diff_stats"],
+    system_prompt="""# Naming reviewer
+
+Review changed files for confusing names. Return only naming findings.""",
+))
+
+@app.task(name="naming_reviewer", timeout_seconds=120)
+async def naming_reviewer_task(
+    patches: list[dict[str, str]], run_id: str | None = None,
+) -> dict[str, Any]:
+    ctx = RunContext(tracer=store_tracer(), run_id=run_id)
+    result = await naming_reviewer.run({"patches": patches}, ctx)
+    return {
+        "text": result.text,
+        "usage": {
+            "input_tokens": result.usage.input_tokens,
+            "output_tokens": result.usage.output_tokens,
+        },
+    }
 
 
 # ---------------------------------------------------------------------------
