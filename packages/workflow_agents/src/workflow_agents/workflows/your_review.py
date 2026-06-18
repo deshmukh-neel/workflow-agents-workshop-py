@@ -160,7 +160,11 @@ async def workflow_task(input: dict[str, Any]) -> dict[str, Any]:
         "usage": result["usage"],
     }
 
-
+import asyncio
+     results = await asyncio.gather(
+         step(my_reviewer_task)(patches_dicts, run_id),
+         step(naming_reviewer_task)(patches_dicts, run_id),
+     )
 # -- Ideas to explore ----------------------------------------------------------
 #
 # You now have a working agent + task. Here are ways to extend it:
@@ -173,12 +177,8 @@ async def workflow_task(input: dict[str, Any]) -> dict[str, Any]:
 #   Define another agent (e.g. a naming reviewer), wrap it as a task, and
 #   run both in parallel:
 #
-#     import asyncio
-#     results = await asyncio.gather(
-#         step(my_reviewer_task)(patches_dicts, run_id),
-#         step(naming_reviewer_task)(patches_dicts, run_id),
-#     )
-#
+     
+
 # ▸ Add a judge step
 #   Import the judge from code_review.py or define your own. Feed the
 #   reviewer findings into it and return a verdict:
